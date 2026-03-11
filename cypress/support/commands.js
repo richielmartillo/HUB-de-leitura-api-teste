@@ -53,7 +53,7 @@ Cypress.Commands.add('cadastrarUsuario', (nome, email, senha) => {
         return response.body.user.id
     })
 })
-
+/*
 Cypress.Commands.add('atualizarLivro', (token, bookId, title, author) => {
   return cy.api({
     method: 'POST',
@@ -75,8 +75,8 @@ Cypress.Commands.add('atualizarLivro', (token, bookId, title, author) => {
     
   })
 })
-
-Cypress.Commands.add('crearLivro', (title, token,author) => {
+*/
+Cypress.Commands.add('criarLivro', (title, token,author) => {
     cy.api({
                method: 'POST',
                url: 'books',
