@@ -138,16 +138,7 @@ describe('PUT - Teste de API - Gestão de Usuários', () => {
 });
 
 describe('DELETE - Teste de API - Gestão de Usuários', () => {
-    it.skip('Deve excluir um usuário com sucesso', () => {
-        cy.api({
-            method: 'DELETE',
-            url: 'users/31',
-            headers: { 'Authorization': token }
-        }).should(response => {
-            expect(response.status).to.equal(200)
-            expect(response.body.message).to.equal('Usuário removido com sucesso.')
-        })
-    });
+  
 
     it('Deve excluir um usuário com sucesso - De forma dinâmica', () => {
         cy.cadastrarUsuario('Fabio para deletar', 'email@deletar.com', 'senha123').then(userId => {
