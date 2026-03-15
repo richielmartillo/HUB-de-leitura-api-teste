@@ -1,0 +1,30 @@
+{
+  "livroValido": {
+    "title": "Dom Casmurro",
+    "author": "Machado de Assis",
+    "description": "Romance brasileiro",
+    "category": "Literatura Brasileira",
+    "isbn": "978-85-260-1320-6",
+    "editor": "Editora Ática",
+    "language": "Português",
+    "publication_year": 1899,
+    "pages": 256,
+    "format": "Físico",
+    "total_copies": 5,
+    "available_copies": 5
+  },
+  "livroInvalido": {
+    "title": "",
+    "author": "",
+    "description": "",
+    "category": "Literatura Brasileira",
+    "isbn": "978-85-260-1320-6",
+    "editor": "Editora Ática",
+    "language": "Português",
+    "publication_year": 1899,
+    "pages": 256,
+    "format": "Físico",
+    "total_copies": 5,
+    "available_copies": 5
+  }
+}

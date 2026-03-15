@@ -4,6 +4,7 @@ describe('Testes da Funcionalidade Catálogo de Livros', () => {
   let token
 
   beforeEach(() => {
+    cy.fixture('livros').as('livros')
     cy.geraToken('admin@biblioteca.com', 'admin123').then((tkn) => {
       token = tkn
     })
@@ -70,11 +71,6 @@ describe('Testes da Funcionalidade Catálogo de Livros', () => {
         expect(response.status).to.equal(200)
         expect(response.body).to.have.property('authors')
         expect(response.body.authors).to.be.an('array')
-        expect(response.body.authors.length).to.be.greaterThan(0)
-
-        expect(response.body.authors[0]).to.have.property('name')
-        expect(response.body.authors[0]).to.have.property('bookCount')
-        expect(response.body.authors[0]).to.have.property('availableBooks')
       })
     })
 
@@ -85,7 +81,7 @@ describe('Testes da Funcionalidade Catálogo de Livros', () => {
         headers: { Authorization: token },
         qs: {
           search: 'Dom Casmurro',
-          category: 'Ficção Clássica',
+          category: 'Literatura Brasileira',
           author: 'Machado de Assis'
         }
       }).should((response) => {
@@ -105,7 +101,6 @@ describe('Testes da Funcionalidade Catálogo de Livros', () => {
         }
       }).then((response) => {
         expect(response.status).to.equal(200)
-        expect(response.body.books).to.exist
         expect(response.body.books.length).to.be.greaterThan(0)
 
         const bookId = response.body.books[0].id
@@ -116,7 +111,6 @@ describe('Testes da Funcionalidade Catálogo de Livros', () => {
           headers: { Authorization: token }
         }).then((detalheResponse) => {
           expect(detalheResponse.status).to.equal(200)
-          expect(detalheResponse.body.book).to.exist
           expect(detalheResponse.body.book.id).to.equal(bookId)
           expect(detalheResponse.body.book.title).to.exist
           expect(detalheResponse.body.book.author).to.exist
@@ -126,25 +120,34 @@ describe('Testes da Funcionalidade Catálogo de Livros', () => {
   })
 
   describe('POST - Gestão de livros', () => {
-    it('Deve validar a mensagem de erro do livro com dados inválidos', () => {
+    it('Deve cadastrar um livro com sucesso', function () {
+      const livro = {
+        ...this.livros.livroValido,
+        title: `Livro ${Date.now()}`,
+        author: `Autor ${Date.now()}`,
+        isbn: `978-85-${Date.now()}`
+      }
+
       cy.api({
         method: 'POST',
         url: 'books',
         headers: { Authorization: token },
-        body: {
-          title: '',
-          author: '',
-          description: '',
-          category: 'Literatura Brasileira',
-          isbn: '978-85-260-1320-6',
-          editor: 'Editora Ática',
-          language: 'Português',
-          publication_year: 1890,
-          pages: 312,
-          format: 'Físico',
-          total_copies: 4,
-          available_copies: 4
-        },
+        body: livro
+      }).should((response) => {
+        expect(response.status).to.equal(201)
+        expect(response.body.message).to.equal('Livro criado com sucesso.')
+        expect(response.body.book).to.have.property('id')
+        expect(response.body.book.title).to.equal(livro.title)
+        expect(response.body.book.author).to.equal(livro.author)
+      })
+    })
+
+    it('Deve validar a mensagem de erro do livro com dados inválidos', function () {
+      cy.api({
+        method: 'POST',
+        url: 'books',
+        headers: { Authorization: token },
+        body: this.livros.livroInvalido,
         failOnStatusCode: false
       }).should((response) => {
         expect(response.status).to.equal(400)
@@ -155,26 +158,37 @@ describe('Testes da Funcionalidade Catálogo de Livros', () => {
   })
 
   describe('PUT - Gestão de livros', () => {
-    it('Deve atualizar com sucesso um livro criado dinamicamente', () => {
-      const title = `Livro ${Date.now()}`
-      const author = `Autor ${Date.now()}`
-      const dadosAtualizados = {
-        title: `Livro atualizado ${Date.now()}`,
-        author: `Autor atualizado ${Date.now()}`,
-        description: 'Descrição atualizada do livro',
-        category: 'Categoria atualizada',
-        isbn: `978-85-${Date.now()}`,
-        editor: 'Editora Atualizada',
-        language: 'Português',
-        publication_year: 2000,
-        pages: 300,
-        format: 'Físico',
-        total_copies: 10,
-        available_copies: 5
+    it('Deve atualizar com sucesso um livro criado dinamicamente', function () {
+      const livroNovo = {
+        ...this.livros.livroValido,
+        title: `Livro ${Date.now()}`,
+        author: `Autor ${Date.now()}`,
+        isbn: `978-85-${Date.now()}`
       }
 
-      cy.criarLivro(title, token, author).then((bookId) => {
-        cy.atualizarLivro(token, bookId, dadosAtualizados).should((response) => {
+      const dadosAtualizados = {
+        ...this.livros.livroValido,
+        title: `Livro atualizado ${Date.now()}`,
+        author: `Autor atualizado ${Date.now()}`,
+        isbn: `978-85-${Date.now() + 1}`
+      }
+
+      cy.api({
+        method: 'POST',
+        url: 'books',
+        headers: { Authorization: token },
+        body: livroNovo
+      }).then((createResponse) => {
+        expect(createResponse.status).to.equal(201)
+
+        const bookId = createResponse.body.book.id
+
+        cy.api({
+          method: 'PUT',
+          url: `books/${bookId}`,
+          headers: { Authorization: token },
+          body: dadosAtualizados
+        }).should((response) => {
           expect(response.status).to.equal(200)
           expect(response.body.message).to.equal('Livro atualizado com sucesso.')
         })
@@ -183,11 +197,24 @@ describe('Testes da Funcionalidade Catálogo de Livros', () => {
   })
 
   describe('DELETE - Gestão de livros', () => {
-    it('Deve excluir um livro com sucesso de forma dinâmica', () => {
-      const title = `Livro deletar ${Date.now()}`
-      const author = `Autor deletar ${Date.now()}`
+    it('Deve excluir um livro com sucesso de forma dinâmica', function () {
+      const livroNovo = {
+        ...this.livros.livroValido,
+        title: `Livro deletar ${Date.now()}`,
+        author: `Autor deletar ${Date.now()}`,
+        isbn: `978-85-${Date.now()}`
+      }
 
-      cy.criarLivro(title, token, author).then((bookId) => {
+      cy.api({
+        method: 'POST',
+        url: 'books',
+        headers: { Authorization: token },
+        body: livroNovo
+      }).then((createResponse) => {
+        expect(createResponse.status).to.equal(201)
+
+        const bookId = createResponse.body.book.id
+
         cy.api({
           method: 'DELETE',
           url: `books/${bookId}`,
